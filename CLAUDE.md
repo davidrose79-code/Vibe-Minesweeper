@@ -70,9 +70,9 @@ Short imperative messages, e.g.:
 
 ## Branch
 
-Always develop on: `claude/minesweeper-mobile-game-RtItl`
+This is a small personal project — push directly to `main`.
 
-Merge to `main` only when a feature is complete and working.
+No feature branches needed unless the change is experimental.
 
 ## Optional Extras (implement in this order)
 

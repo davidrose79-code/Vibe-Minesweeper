@@ -6,24 +6,22 @@
   --surface:    #16213e;
   --header-bg:  #0f3460;
   --accent:     #e94560;
-  --cell-hide:  #2d4a7a;
-  --cell-hide2: #274269;
-  --cell-rev:   #1a2e4a;
-  --cell-rev2:  #162843;
+  --cell-hide:  #4a4a4a;
+  --cell-rev:   #c8c8c8;
   --text:       #e0e0e0;
   --text-dim:   #8899aa;
   --flag-color: #ff6b6b;
   --mine-color: #e94560;
 
   /* Number colours 1-8 */
-  --n1: #4fc3f7;
-  --n2: #81c784;
-  --n3: #e57373;
-  --n4: #9575cd;
-  --n5: #ff8a65;
-  --n6: #4dd0e1;
-  --n7: #f06292;
-  --n8: #a1887f;
+  --n1: #0055cc;
+  --n2: #007700;
+  --n3: #cc0000;
+  --n4: #660099;
+  --n5: #aa3300;
+  --n6: #007788;
+  --n7: #880044;
+  --n8: #555555;
 }
 
 @media (prefers-color-scheme: light) {
@@ -32,10 +30,8 @@
     --surface:    #c5cae9;
     --header-bg:  #3949ab;
     --accent:     #e53935;
-    --cell-hide:  #9fa8da;
-    --cell-hide2: #8c9bd4;
-    --cell-rev:   #c5cae9;
-    --cell-rev2:  #b3b9e0;
+    --cell-hide:  #888888;
+    --cell-rev:   #e0e0e0;
     --text:       #1a1a2e;
     --text-dim:   #555577;
     --flag-color: #e53935;
@@ -150,20 +146,14 @@ main {
   justify-content: center;
   font-weight: 800;
   font-size: clamp(0.5rem, 3vw, 1rem);
-  /* Checkerboard pattern for hidden cells */
   background: var(--cell-hide);
   transition: background 0.08s;
   position: relative;
   overflow: hidden;
 }
 
-.cell:nth-child(even) { background: var(--cell-hide2); }
-
 .cell.revealed {
   background: var(--cell-rev);
-}
-.cell.revealed:nth-child(even) {
-  background: var(--cell-rev2);
 }
 
 .cell.flagged::after {
