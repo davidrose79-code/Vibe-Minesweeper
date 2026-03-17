@@ -42,6 +42,7 @@ function initGame(diff) {
     }
   }
 
+  resetTransform();
   renderBoard();
   updateHeader();
   hideModal();
@@ -320,11 +321,25 @@ function hideModal() {
   document.getElementById('modal').classList.add('hidden');
 }
 
+// ─── Mode toggle (reveal / flag) ──────────────────────────────────────────────
+let flagMode = false;
+
+function setFlagMode(on) {
+  flagMode = on;
+  const btn = document.getElementById('mode-toggle');
+  btn.textContent = flagMode ? '🚩 Flag' : '⛏ Reveal';
+  btn.classList.toggle('flag-mode', flagMode);
+}
+
 // ─── Touch / click handling ───────────────────────────────────────────────────
-// Single tap/click = reveal   Double tap/click = flag
-const DOUBLE_TAP_MS = 300;
+// Tracks how many fingers are currently down (used to ignore taps during pinch)
+let activeTouchCount = 0;
 
 function handleSingleAction(r, c) {
+  if (flagMode) {
+    flagCell(r, c);
+    return;
+  }
   const cell = state.grid[r][c];
   if (cell.revealed && cell.adjacent > 0) {
     chordReveal(r, c);
@@ -334,12 +349,9 @@ function handleSingleAction(r, c) {
 }
 
 function attachTouchHandlers(el, r, c) {
-  let lastTap = 0;
-  let tapTimer = null;
   let startX, startY;
   let moved = false;
 
-  // ── Touch ──
   el.addEventListener('touchstart', (e) => {
     e.preventDefault();
     startX = e.touches[0].clientX;
@@ -355,42 +367,90 @@ function attachTouchHandlers(el, r, c) {
 
   el.addEventListener('touchend', (e) => {
     e.preventDefault();
-    if (moved) return;
-
-    const now = Date.now();
-    if (now - lastTap < DOUBLE_TAP_MS) {
-      clearTimeout(tapTimer);
-      lastTap = 0;
-      flagCell(r, c);
-    } else {
-      lastTap = now;
-      tapTimer = setTimeout(() => {
-        lastTap = 0;
-        handleSingleAction(r, c);
-      }, DOUBLE_TAP_MS);
-    }
+    if (moved || activeTouchCount > 1) return;
+    handleSingleAction(r, c);
   }, { passive: false });
 
-  // ── Mouse (desktop testing) ──
-  let lastClick = 0;
-  let clickTimer = null;
-
-  el.addEventListener('click', (e) => {
-    const now = Date.now();
-    if (now - lastClick < DOUBLE_TAP_MS) {
-      clearTimeout(clickTimer);
-      lastClick = 0;
-      flagCell(r, c);
-    } else {
-      lastClick = now;
-      clickTimer = setTimeout(() => {
-        lastClick = 0;
-        handleSingleAction(r, c);
-      }, DOUBLE_TAP_MS);
-    }
-  });
-
+  // Mouse support for desktop testing
+  el.addEventListener('click', () => handleSingleAction(r, c));
   el.addEventListener('contextmenu', (e) => e.preventDefault());
+}
+
+// ─── Zoom / Pan ───────────────────────────────────────────────────────────────
+const vt = { scale: 1, x: 0, y: 0 };
+
+function applyTransform() {
+  document.getElementById('board').style.transform =
+    `translate(${vt.x}px, ${vt.y}px) scale(${vt.scale})`;
+}
+
+function resetTransform() {
+  vt.scale = 1; vt.x = 0; vt.y = 0;
+  applyTransform();
+}
+
+function clampTransform() {
+  if (vt.scale <= 1) { vt.scale = 1; vt.x = 0; vt.y = 0; return; }
+  const main = document.querySelector('main');
+  const board = document.getElementById('board');
+  const maxX = Math.max(0, (board.offsetWidth  * vt.scale - main.clientWidth)  / 2);
+  const maxY = Math.max(0, (board.offsetHeight * vt.scale - main.clientHeight) / 2);
+  vt.x = Math.max(-maxX, Math.min(maxX, vt.x));
+  vt.y = Math.max(-maxY, Math.min(maxY, vt.y));
+}
+
+function setupZoomPan() {
+  const main = document.querySelector('main');
+  const liveTouch = {};   // identifier → {x, y}
+  let lastDist = 0;
+  let panStart = null;
+
+  main.addEventListener('touchstart', (e) => {
+    activeTouchCount = e.touches.length;
+    for (const t of e.changedTouches) liveTouch[t.identifier] = { x: t.clientX, y: t.clientY };
+
+    if (e.touches.length === 2) {
+      const [a, b] = Object.values(liveTouch);
+      lastDist = Math.hypot(b.x - a.x, b.y - a.y);
+    } else if (e.touches.length === 1) {
+      panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY, tx: vt.x, ty: vt.y };
+    }
+  }, { passive: true });
+
+  main.addEventListener('touchmove', (e) => {
+    for (const t of e.changedTouches) liveTouch[t.identifier] = { x: t.clientX, y: t.clientY };
+
+    if (e.touches.length === 2) {
+      const [a, b] = Object.values(liveTouch);
+      const dist = Math.hypot(b.x - a.x, b.y - a.y);
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      const mainRect = main.getBoundingClientRect();
+      const ncX = mainRect.left + mainRect.width  / 2;
+      const ncY = mainRect.top  + mainRect.height / 2;
+      const newScale = Math.min(4, Math.max(1, vt.scale * dist / lastDist));
+      const r = newScale / vt.scale;
+      vt.x = mx - ncX - (mx - ncX - vt.x) * r;
+      vt.y = my - ncY - (my - ncY - vt.y) * r;
+      vt.scale = newScale;
+      clampTransform();
+      applyTransform();
+      lastDist = dist;
+
+    } else if (e.touches.length === 1 && panStart && vt.scale > 1) {
+      vt.x = panStart.tx + e.touches[0].clientX - panStart.x;
+      vt.y = panStart.ty + e.touches[0].clientY - panStart.y;
+      clampTransform();
+      applyTransform();
+    }
+  }, { passive: true });
+
+  main.addEventListener('touchend', (e) => {
+    for (const t of e.changedTouches) delete liveTouch[t.identifier];
+    activeTouchCount = e.touches.length;
+    if (e.touches.length < 2) lastDist = 0;
+    if (e.touches.length === 0) panStart = null;
+  }, { passive: true });
 }
 
 // ─── Difficulty bar ───────────────────────────────────────────────────────────
@@ -411,5 +471,11 @@ document.getElementById('modal-restart').addEventListener('click', () => {
   initGame(state.diff || 'easy');
 });
 
+// ─── Mode toggle button ───────────────────────────────────────────────────────
+document.getElementById('mode-toggle').addEventListener('click', () => {
+  setFlagMode(!flagMode);
+});
+
 // ─── Boot ─────────────────────────────────────────────────────────────────────
+setupZoomPan();
 initGame('easy');
