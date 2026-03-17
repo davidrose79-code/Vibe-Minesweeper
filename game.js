@@ -320,53 +320,75 @@ function hideModal() {
   document.getElementById('modal').classList.add('hidden');
 }
 
-// ─── Touch handling ───────────────────────────────────────────────────────────
-const LONG_PRESS_MS = 500;
+// ─── Touch / click handling ───────────────────────────────────────────────────
+// Single tap/click = reveal   Double tap/click = flag
+const DOUBLE_TAP_MS = 300;
+
+function handleSingleAction(r, c) {
+  const cell = state.grid[r][c];
+  if (cell.revealed && cell.adjacent > 0) {
+    chordReveal(r, c);
+  } else {
+    revealCell(r, c);
+  }
+}
 
 function attachTouchHandlers(el, r, c) {
-  let pressTimer = null;
-  let longFired = false;
+  let lastTap = 0;
+  let tapTimer = null;
   let startX, startY;
+  let moved = false;
 
+  // ── Touch ──
   el.addEventListener('touchstart', (e) => {
     e.preventDefault();
-    longFired = false;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
-    el.classList.add('pressing');
-
-    pressTimer = setTimeout(() => {
-      longFired = true;
-      el.classList.remove('pressing');
-      flagCell(r, c);
-    }, LONG_PRESS_MS);
+    moved = false;
   }, { passive: false });
 
   el.addEventListener('touchmove', (e) => {
-    // Cancel long press if finger moves significantly
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
-    if (Math.sqrt(dx * dx + dy * dy) > 10) {
-      clearTimeout(pressTimer);
-      el.classList.remove('pressing');
-    }
+    if (Math.sqrt(dx * dx + dy * dy) > 10) moved = true;
   }, { passive: true });
 
   el.addEventListener('touchend', (e) => {
     e.preventDefault();
-    clearTimeout(pressTimer);
-    el.classList.remove('pressing');
+    if (moved) return;
 
-    if (longFired) return; // already handled as long press
-
-    const cell = state.grid[r][c];
-    if (cell.revealed && cell.adjacent > 0) {
-      // Chord reveal on already-revealed numbered cell
-      chordReveal(r, c);
+    const now = Date.now();
+    if (now - lastTap < DOUBLE_TAP_MS) {
+      clearTimeout(tapTimer);
+      lastTap = 0;
+      flagCell(r, c);
     } else {
-      revealCell(r, c);
+      lastTap = now;
+      tapTimer = setTimeout(() => {
+        lastTap = 0;
+        handleSingleAction(r, c);
+      }, DOUBLE_TAP_MS);
     }
   }, { passive: false });
+
+  // ── Mouse (desktop testing) ──
+  let lastClick = 0;
+  let clickTimer = null;
+
+  el.addEventListener('click', (e) => {
+    const now = Date.now();
+    if (now - lastClick < DOUBLE_TAP_MS) {
+      clearTimeout(clickTimer);
+      lastClick = 0;
+      flagCell(r, c);
+    } else {
+      lastClick = now;
+      clickTimer = setTimeout(() => {
+        lastClick = 0;
+        handleSingleAction(r, c);
+      }, DOUBLE_TAP_MS);
+    }
+  });
 
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }

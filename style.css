@@ -184,11 +184,6 @@ main {
 .cell[data-n="7"] { color: var(--n7); }
 .cell[data-n="8"] { color: var(--n8); }
 
-/* Long-press highlight feedback */
-.cell.pressing {
-  filter: brightness(1.4);
-}
-
 /* ===== Modal ===== */
 .modal {
   position: fixed;
