@@ -472,7 +472,10 @@ document.getElementById('modal-restart').addEventListener('click', () => {
 });
 
 // ─── Mode toggle button ───────────────────────────────────────────────────────
-document.getElementById('mode-toggle').addEventListener('click', () => {
+const modeToggleBtn = document.getElementById('mode-toggle');
+modeToggleBtn.addEventListener('click', () => setFlagMode(!flagMode));
+modeToggleBtn.addEventListener('touchend', (e) => {
+  e.preventDefault();           // stop the 300 ms synthetic click
   setFlagMode(!flagMode);
 });
 

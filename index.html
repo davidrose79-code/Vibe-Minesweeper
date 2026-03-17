@@ -16,9 +16,12 @@
       <span id="mine-count">0</span>
     </div>
 
-    <button id="restart-btn" aria-label="Restart game">&#9881;</button>
+    <div class="header-center">
+      <button id="restart-btn" aria-label="Restart game">&#9881;</button>
+      <button id="mode-toggle" aria-label="Switch between reveal and flag mode">⛏ Reveal</button>
+    </div>
 
-    <div class="stat">
+    <div class="stat stat-right">
       <span class="stat-icon">⏱</span>
       <span id="timer">0</span>
     </div>
@@ -29,10 +32,6 @@
     <button class="diff-btn" data-diff="medium">Medium</button>
     <button class="diff-btn" data-diff="hard">Hard</button>
   </nav>
-
-  <div id="action-bar">
-    <button id="mode-toggle" aria-label="Switch between reveal and flag mode">⛏ Reveal</button>
-  </div>
 
   <main>
     <div id="board" role="grid" aria-label="Minesweeper board"></div>
