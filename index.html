@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>Vibe Minesweeper</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <div class="stat">
+      <span class="stat-icon">🚩</span>
+      <span id="mine-count">0</span>
+    </div>
+
+    <button id="restart-btn" aria-label="Restart game">&#9881;</button>
+
+    <div class="stat">
+      <span class="stat-icon">⏱</span>
+      <span id="timer">0</span>
+    </div>
+  </header>
+
+  <nav id="difficulty-bar">
+    <button class="diff-btn active" data-diff="easy">Easy</button>
+    <button class="diff-btn" data-diff="medium">Medium</button>
+    <button class="diff-btn" data-diff="hard">Hard</button>
+  </nav>
+
+  <main>
+    <div id="board" role="grid" aria-label="Minesweeper board"></div>
+  </main>
+
+  <!-- End-game modal -->
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div id="modal-emoji" class="modal-emoji"></div>
+      <h2 id="modal-title"></h2>
+      <p id="modal-time"></p>
+      <p id="modal-best"></p>
+      <button id="modal-restart">Play Again</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
